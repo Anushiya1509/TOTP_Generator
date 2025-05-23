@@ -10,6 +10,7 @@ import dev.samstevens.totp.secret.SecretGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Cipher;
@@ -28,8 +29,8 @@ public class TotpService {
     @Autowired
     private UserRepository userRepository;
 
-    // Simple AES key (for example only - store securely in real apps)
-    private static final String ENCRYPTION_KEY = "TotpSecretEncryptionKey"; // 16 bytes for AES-128
+    @Value("${encryption.key}")
+    private String encryptionKey;
 
     public String generateTotp(String username) throws Exception {
         logger.info("Generating TOTP for user: {}", username);
@@ -59,18 +60,9 @@ public class TotpService {
         return result;
     }
 
-    private String encrypt(String input) throws Exception {
-        logger.debug("Encrypting secret");
-        SecretKeySpec key = new SecretKeySpec(ENCRYPTION_KEY.getBytes(), "AES");
-        Cipher cipher = Cipher.getInstance("AES");
-        cipher.init(Cipher.ENCRYPT_MODE, key);
-        byte[] encrypted = cipher.doFinal(input.getBytes());
-        return Base64.getEncoder().encodeToString(encrypted);
-    }
-
     private String decrypt(String encrypted) throws Exception {
         logger.debug("Decrypting secret");
-        SecretKeySpec key = new SecretKeySpec(ENCRYPTION_KEY.getBytes(), "AES");
+        SecretKeySpec key = new SecretKeySpec(encryptionKey.getBytes(), "AES");
         Cipher cipher = Cipher.getInstance("AES");
         cipher.init(Cipher.DECRYPT_MODE, key);
         byte[] decrypted = cipher.doFinal(Base64.getDecoder().decode(encrypted));

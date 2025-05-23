@@ -1,5 +1,7 @@
 package com.anushiya.totp.controller;
 
+import com.anushiya.totp.dto.UsernameRequest;
+import com.anushiya.totp.dto.VerifyTotpRequest;
 import com.anushiya.totp.service.TotpService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,8 +23,9 @@ public class TotpController {
     private TotpService totpService;
 
     @PostMapping("/generate")
-    public ResponseEntity<Map<String, Object>> generateTotpSecret(@RequestParam String username) {
+    public ResponseEntity<Map<String, Object>> generateTotpSecret(@RequestBody UsernameRequest request) {
         Map<String, Object> response = new HashMap<>();
+        String username = request.getUsername();
         logger.info("Generating TOTP for user: {}", username);
         try {
             String secret = totpService.generateTotp(username);
@@ -39,17 +42,17 @@ public class TotpController {
     }
 
     @PostMapping("/verify")
-    public ResponseEntity<Map<String, Object>> verifyTotp(@RequestParam String username, @RequestParam String code) {
+    public ResponseEntity<Map<String, Object>> verifyTotp(@RequestBody VerifyTotpRequest request) {
         Map<String, Object> response = new HashMap<>();
-        logger.info("Verifying TOTP for user: {}", username);
+        logger.info("Verifying TOTP for user: {}", request.getUsername());
         try {
-            boolean isValid = totpService.verifyTotp(username, code);
+            boolean isValid = totpService.verifyTotp(request.getUsername(), request.getCode());
             response.put("valid", isValid);
             response.put("message", isValid ? "TOTP verification successful" : "TOTP verification failed");
-            logger.debug("Verification result for user [{}]: {}", username, isValid);
+            logger.debug("Verification result for user [{}]: {}", request.getUsername(), isValid);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            logger.error("Failed to verify TOTP for user [{}]: {}", username, e.getMessage(), e);
+            logger.error("Failed to verify TOTP for user [{}]: {}", request.getUsername(), e.getMessage(), e);
             response.put("error", "Failed to verify TOTP code");
             response.put("details", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);

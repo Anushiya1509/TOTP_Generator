@@ -8,6 +8,7 @@ import dev.samstevens.totp.secret.SecretGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -27,7 +28,9 @@ public class AuthService {
     private BCryptPasswordEncoder passwordEncoder;
 
     private final SecretGenerator secretGenerator = new DefaultSecretGenerator();
-    private static final String ENCRYPTION_KEY = "MySecretKey12345"; // 16-byte AES key
+
+    @Value("${encryption.key}")
+    private String encryptionKey;
 
     public void register(RegisterRequest request) throws Exception {
         logger.info("Creating new user: {}", request.getUsername());
@@ -48,7 +51,7 @@ public class AuthService {
 
     private String encrypt(String input) throws Exception {
         logger.debug("Encrypting TOTP secret");
-        SecretKeySpec key = new SecretKeySpec(ENCRYPTION_KEY.getBytes(), "AES");
+        SecretKeySpec key = new SecretKeySpec(encryptionKey.getBytes(), "AES");
         Cipher cipher = Cipher.getInstance("AES");
         cipher.init(Cipher.ENCRYPT_MODE, key);
         byte[] encrypted = cipher.doFinal(input.getBytes());
